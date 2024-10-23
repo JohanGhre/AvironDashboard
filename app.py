@@ -477,6 +477,10 @@ with tab4:
                 'Importance': importance
             }).sort_values(by='Importance', ascending=False)
 
+            # Filtrer les features avec une importance différente de 0
+            feature_importance_filtered = feature_importance[feature_importance['Importance'] != 0]
+
+
             # Create two columns
             col1, col2 = st.columns(2)
 
@@ -487,23 +491,25 @@ with tab4:
 
             # Plot feature importance in the second column
             with col2:
-                fig = px.bar(feature_importance, 
-                x='Importance', 
-                y='Feature', 
-                orientation='h', 
-                title='Feature Importance from Lasso Model',
-                labels={'Importance': 'Importance', 'Feature': 'Features'},
-                color_discrete_sequence=['#2C7C7E']  # Soft teal color
-               )
+                # Créer le graphique en utilisant les données filtrées
+                fig = px.bar(feature_importance_filtered, 
+                            x='Importance', 
+                            y='Feature', 
+                            orientation='h', 
+                            title='Feature Importance from Lasso Model',
+                            labels={'Importance': 'Importance', 'Feature': 'Features'},
+                            color_discrete_sequence=['#2C7C7E']  # Soft teal color
+                            )
 
                 fig.update_layout(
                     xaxis_title='Importance',
                     yaxis_title='Features',
                     height=500,
                     width=900,
-                    plot_bgcolor='#F5F5F5' 
+                    plot_bgcolor='#F5F5F5'
                 )
 
+                # Afficher le graphique dans Streamlit
                 st.plotly_chart(fig)
 
             # Comparer les valeurs réelles et prédites avec des légendes au-dessus de chaque point
