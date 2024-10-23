@@ -8,6 +8,10 @@ from sklearn.model_selection import learning_curve
 import numpy as np
 import plotly.express as px
 
+st.cache_resource.clear()
+st.cache_data.clear()
+
+
 # Configuration de la page Streamlit
 st.set_page_config(
     page_title="Dashboard Aviron 2000m avec Modèle de Prédiction",
