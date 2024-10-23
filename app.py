@@ -1,10 +1,12 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import joblib
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import learning_curve
+import numpy as np
+import plotly.express as px
 
 # Configuration de la page Streamlit
 st.set_page_config(
@@ -384,11 +386,7 @@ with tab4:
             with col3:
                 st.metric("R-squared (R²)", f"{lasso_r2:.6f}")
 
-    
-            from sklearn.model_selection import learning_curve
-            import numpy as np
-            import plotly.graph_objects as go
-
+        
             # Modifier train_sizes pour éviter de très petits ensembles de validation
             train_sizes, train_scores, test_scores = learning_curve(
                 best_lasso_model, X_train_scaled, y_train, cv=5, scoring='r2', train_sizes=np.linspace(0.2, 1.0, 8)
