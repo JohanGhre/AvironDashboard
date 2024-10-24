@@ -55,14 +55,30 @@ except Exception as e:
 # Titre du dashboard
 st.title("🚣 Dashboard Performance Aviron 2000m avec Modèle de Prédiction")
 
-# Métriques principales
-col1, col2, col3, col4 = st.columns(4)
+# Fonction pour convertir un temps 'mm:ss.S' en secondes
+def time_to_seconds(time_str):
+    minutes, seconds = time_str.split(':')
+    return int(minutes) * 60 + float(seconds)
+
+# Appliquer la conversion à la colonne 'Total Time (2000m)'
+df['Total Time Seconds'] = df['Total Time (2000m)'].apply(time_to_seconds)
+
+# Trouver le meilleur temps en secondes
+best_time_in_seconds = df['Total Time Seconds'].min()
+
+# Trouver le participant ayant réalisé le meilleur temps
+best_time_participant = df.loc[df['Total Time Seconds'] == best_time_in_seconds, 'Participant'].values[0]
+
+# Convertir le meilleur temps en format mm:ss.S
+best_time_formatted = df.loc[df['Total Time Seconds'] == best_time_in_seconds, 'Total Time (2000m)'].values[0]
+
+# Mise à jour de ton code avec les bonnes valeurs
+col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
-    best_time = df['Total Time (2000m)'].min()
     st.metric(
-        "Meilleur Temps",
-        best_time,
+        f"Meilleur Temps ({best_time_participant})",
+        best_time_formatted,
         "2000m"
     )
 
@@ -88,9 +104,21 @@ with col4:
         len(df),
         "Participants"
     )
-
+    
+with col5:
+    avg_time = df['Total Time Seconds'].mean()
+    avg_time_formatted = f"{int(avg_time // 60)}:{avg_time % 60:.1f}"  # Convertir les secondes en format mm:ss.S
+    st.metric(
+        "Temps Moyen",
+        avg_time_formatted,
+        "2000m"
+    )  
+    
+    
+    
+    
 # Tabs pour différentes visualisations
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Relation Vitesse et Longueur de Coup", "📈 Heatmap des Corrélations", "🎯 Comparaison des Participants", "🔮 Modèle de Prédiction"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["📊 Relation Vitesse et Longueur de Coup", "📈 Heatmap des Corrélations", "🎯 Comparaison des Participants", "🔮 Prédire sa vitesse", " 🔮 Prédire la vitesse du Participant"])
 
 # Tab 1: Scatter plot - Vitesse Moyenne vs Longueur de Coup avec SPM
 with tab1:
@@ -543,19 +571,87 @@ with tab4:
                 width=800,
                 plot_bgcolor='#F5F5F5'  # Contexte de graphique en gris clair
             )
-            
-            # Utilisation de HTML et CSS pour centrer le graphique dans Streamlit
-            st.markdown("""
-                <div style="display: flex; justify-content: center;">
-                    """, unsafe_allow_html=True)
-
+        
             # Affichage du graphique
             st.plotly_chart(fig_comparison)
-
-            # Fermeture du div pour centrer correctement le graphique
-            st.markdown("</div>", unsafe_allow_html=True)
-          
-
+            
 
         except Exception as e:
             st.error(f"Erreur lors de la prédiction: {str(e)}")
+            
+with tab5:      
+    from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+    # List of columns that were used for training the model (replace with the actual feature names)
+    required_columns = [
+        'SPM (2000m)', 'Total Strokes (2000m)', 'Time Split 1', 'SPM Split 1', 
+        'Stroke Count Split 1', 'Time Split 2', 'SPM Split 2', 'Stroke Count Split 2', 
+        'Time Split 3', 'SPM Split 3', 'Stroke Count Split 3', 'Time Split 4', 
+        'SPM Split 4', 'Stroke Count Split 4', 'Avg Speed Split 1 (km/h)', 
+        'Stroke Length Split 1 (m)', 'Avg Speed Split 2 (km/h)', 
+        'Stroke Length Split 2 (m)', 'Avg Speed Split 3 (km/h)', 
+        'Stroke Length Split 3 (m)', 'Avg Speed Split 4 (km/h)', 
+        'Stroke Length Split 4 (m)', 'Avg Stroke Length (m)'
+    ]
+
+    # Modèle de Prédiction
+    st.subheader("Modèle de Prédiction (Lasso)")
+
+    # Sélectionner un participant
+    participants = df['Participant'].unique()
+    selected_participant = st.selectbox("Choisir un participant pour prédiction", participants)
+
+    # Extraire les données du participant sélectionné
+    participant_data = df[df['Participant'] == selected_participant]
+
+    # Afficher la vitesse réelle du participant
+    if not participant_data.empty:
+        real_speed = participant_data['Avg Speed (2000m) km/h'].values[0]
+        st.metric(f"Vitesse réelle de {selected_participant}", f"{real_speed:.2f} km/h")
+
+        # Filtrer uniquement les colonnes nécessaires pour la prédiction
+        user_input_data = participant_data[required_columns]
+        user_input_data_scaled = pd.DataFrame(scaler.transform(user_input_data), columns=user_input_data.columns)
+
+        if st.button("Prédire la vitesse"):
+            try:
+                # Prédire la vitesse du participant sélectionné
+                predicted_speed = best_lasso_model.predict(user_input_data_scaled)
+                st.success(f"Vitesse prédite pour {selected_participant}: {predicted_speed[0]:.2f} km/h")
+
+                # Calcul des métriques de performance
+                mae = mean_absolute_error([real_speed], [predicted_speed])
+                mse = mean_squared_error([real_speed], [predicted_speed])
+    
+
+                # Afficher les métriques dans Streamlit
+                st.write(f"Erreur Absolue Moyenne (MAE): {mae:.6f} km/h")
+                st.write(f"Erreur Quadratique Moyenne (MSE): {mse:.6f} km/h²")
+
+                # Comparer la vitesse réelle et prédite dans un graphique en lignes
+                comparison_fig = go.Figure()
+
+                # Ajouter une courbe pour la vitesse réelle
+                comparison_fig.add_trace(go.Scatter(
+                    x=['Vitesse réelle', 'Vitesse prédite'],
+                    y=[real_speed, predicted_speed[0]],
+                    mode='lines+markers',
+                    name='Vitesse Comparaison',
+                    line=dict(color='royalblue', width=4),
+                    marker=dict(size=12, color='dodgerblue', line=dict(width=2, color='darkblue'))
+                ))
+
+                comparison_fig.update_layout(
+                    title=f"Comparaison des vitesses pour {selected_participant}",
+                    xaxis_title="Type de Vitesse",
+                    yaxis_title="Vitesse (km/h)",
+                    plot_bgcolor='#F5F5F5',
+                    showlegend=False,
+                    height=500,
+                    width=800
+                )
+
+            except Exception as e:
+                st.error(f"Erreur lors de la prédiction: {str(e)}")
+    else:
+        st.warning(f"Aucune donnée disponible pour {selected_participant}.")
