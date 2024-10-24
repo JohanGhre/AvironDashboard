@@ -31,7 +31,6 @@ st.sidebar.markdown("""
 """
 )
 
-
 # Charger le modèle depuis un fichier .pkl
 @st.cache_resource
 def load_model():
@@ -206,9 +205,9 @@ with tab3:
                 ay=-40,
                 font=dict(
                     size=12,
-                    color="white"  
+                    color="purple"  
                 ),
-                arrowcolor="white",
+                arrowcolor="purple",
             )
         ]
     )
@@ -544,10 +543,17 @@ with tab4:
                 width=800,
                 plot_bgcolor='#F5F5F5'  # Contexte de graphique en gris clair
             )
+            
+            # Utilisation de HTML et CSS pour centrer le graphique dans Streamlit
+            st.markdown("""
+                <div style="display: flex; justify-content: center;">
+                    """, unsafe_allow_html=True)
 
+            # Affichage du graphique
             st.plotly_chart(fig_comparison)
 
-
+            # Fermeture du div pour centrer correctement le graphique
+            st.markdown("</div>", unsafe_allow_html=True)
           
 
 
