@@ -60,29 +60,24 @@ def time_to_seconds(time_str):
     minutes, seconds = time_str.split(':')
     return int(minutes) * 60 + float(seconds)
 
-# Appliquer la conversion à la colonne 'Total Time (2000m)'
-df['Total Time Seconds'] = df['Total Time (2000m)'].apply(time_to_seconds)
+# Appliquer la conversion au moment du calcul sans créer de nouvelle colonne
 
-# Trouver le meilleur temps en secondes
-best_time_in_seconds = df['Total Time Seconds'].min()
+# Calculer le meilleur temps (en secondes), puis formater en mm:ss.S
+best_time_in_seconds = df['Total Time (2000m)'].apply(time_to_seconds).min()
+best_time_minutes = int(best_time_in_seconds // 60)
+best_time_seconds = best_time_in_seconds % 60
+best_time_formatted = f"{best_time_minutes}:{best_time_seconds:.1f}"
 
-# Trouver le participant ayant réalisé le meilleur temps
-best_time_participant = df.loc[df['Total Time Seconds'] == best_time_in_seconds, 'Participant'].values[0]
-
-# Convertir le meilleur temps en format mm:ss.S
-best_time_formatted = df.loc[df['Total Time Seconds'] == best_time_in_seconds, 'Total Time (2000m)'].values[0]
+# Calculer le temps moyen (en secondes), puis formater en mm:ss.S
+avg_time_in_seconds = df['Total Time (2000m)'].apply(time_to_seconds).mean()
+avg_time_minutes = int(avg_time_in_seconds // 60)
+avg_time_seconds = avg_time_in_seconds % 60
+avg_time_formatted = f"{avg_time_minutes}:{avg_time_seconds:.1f}"
 
 # Mise à jour de ton code avec les bonnes valeurs
 col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
-    st.metric(
-        f"Meilleur Temps ({best_time_participant})",
-        best_time_formatted,
-        "2000m"
-    )
-
-with col2:
     avg_speed = df['Avg Speed (2000m) km/h'].mean()
     st.metric(
         "Vitesse Moyenne",
@@ -90,7 +85,7 @@ with col2:
         "Générale"
     )
 
-with col3:
+with col2:
     avg_spm = df['SPM (2000m)'].mean()
     st.metric(
         "SPM Moyen",
@@ -98,24 +93,27 @@ with col3:
         "Coups/min"
     )
 
-with col4:
+with col3:
     st.metric(
         "Nombre d'Athlètes",
         len(df),
         "Participants"
     )
-    
+
+with col4:
+    st.metric(
+        "Meilleur Temps",
+        best_time_formatted,
+        "2000m"
+    )
+
 with col5:
-    avg_time = df['Total Time Seconds'].mean()
-    avg_time_formatted = f"{int(avg_time // 60)}:{avg_time % 60:.1f}"  # Convertir les secondes en format mm:ss.S
     st.metric(
         "Temps Moyen",
         avg_time_formatted,
         "2000m"
-    )  
-    
-    
-    
+    )
+
     
 # Tabs pour différentes visualisations
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["📊 Relation Vitesse et Longueur de Coup", "📈 Heatmap des Corrélations", "🎯 Comparaison des Participants", "🔮 Prédire sa vitesse", " 🔮 Prédire la vitesse du Participant"])
