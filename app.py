@@ -623,6 +623,21 @@ with tab5:
     
 
                 # Afficher les métriques dans Streamlit
+                
+                
+                # Formule MSE
+                st.title("MAE et MSE")
+
+                # Formule MAE
+                st.latex(r'''
+                \text{MAE} = \frac{1}{n} \sum_{i=1}^{n} \left| y_i - \hat{y}_i \right|
+                ''')
+
+                # Formule MSE
+                st.latex(r'''
+                \text{MSE} = \frac{1}{n} \sum_{i=1}^{n} \left( y_i - \hat{y}_i \right)^2
+                ''')
+
                 st.write(f"Erreur Absolue Moyenne (MAE): {mae:.6f} km/h")
                 st.write(f"Erreur Quadratique Moyenne (MSE): {mse:.6f} km/h²")
 
